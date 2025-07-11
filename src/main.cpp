@@ -2,7 +2,7 @@
 
 int main(void)
 {
-    crow::simpleApp app;
+    crow::SimpleApp app;
 
     app.port(18080).multithreaded().run();
 
