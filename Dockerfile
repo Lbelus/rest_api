@@ -1,9 +1,8 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
-# Avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install required build tools and dependencies
+# Install build tools and core libraries
 RUN apt-get update && \
     apt-get install -y \
     build-essential \
@@ -14,14 +13,14 @@ RUN apt-get update && \
     unzip \
     pkg-config \
     libasio-dev \
-    libsqlite3-dev \
-    sqlite3 \
+    libmysqlclient-dev \
+    libmysql++-dev \
     curl && \
     apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Crow (header-only, but building it sets up CMake config files)
+# Install Crow
 RUN wget -O CrowCpp.zip https://github.com/CrowCpp/Crow/archive/refs/heads/master.zip && \
     unzip CrowCpp.zip && \
     cd Crow-master && \
@@ -33,14 +32,14 @@ RUN wget -O CrowCpp.zip https://github.com/CrowCpp/Crow/archive/refs/heads/maste
     cd ../../ && \
     rm -rf CrowCpp.zip Crow-master
 
-# Install nlohmann/json (header-only)
+# Install nlohmann/json
 RUN git clone https://github.com/nlohmann/json.git /usr/src/nlohmann_json && \
     cd /usr/src/nlohmann_json && \
     cmake -S . -B build -DBUILD_TESTING=OFF && \
     cmake --install build && \
     rm -rf /usr/src/nlohmann_json
 
-# (Optional) Install GoogleTest — remove if not writing tests inside container
+# (Optional) Install GoogleTest
 RUN wget -O google-test.zip https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip && \
     unzip google-test.zip && \
     cd googletest-* && \
@@ -52,12 +51,9 @@ RUN wget -O google-test.zip https://github.com/google/googletest/archive/03597a0
     cd ../../ && \
     rm -rf google-test.zip googletest-*
 
-# Reset frontend
 ENV DEBIAN_FRONTEND=
 
-# Working directory for development
 WORKDIR /workspace
 
-# Default shell
 CMD ["bash"]
 
