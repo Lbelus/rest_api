@@ -13,7 +13,7 @@ RUN apt-get update && \
     unzip \
     pkg-config \
     libasio-dev \
-    libmysqlclient-dev \
+    default-libmysqlclient-dev \ 
     libmysql++-dev \
     curl && \
     apt-get autoremove -y && \
@@ -56,4 +56,7 @@ ENV DEBIAN_FRONTEND=
 WORKDIR /workspace
 
 CMD ["bash"]
+
+
+# default-libmysqlclient-dev is replacing libmysqlclient-dev
 

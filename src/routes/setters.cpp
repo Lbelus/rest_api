@@ -2,41 +2,38 @@
 
 
 // INSERT 
-
 void crow_create_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
-    CROW_ROUTE(app, "/<string>").methods(crow::HTTPMethod::POST)
+    CROW_ROUTE(app, "/create/<string>").methods(crow::HTTPMethod::POST)
     ([&mysql](const crow::request& req, const std::string& entity)
     {
         auto body = crow::json::load(req.body);
-        if (!body) {
-            return crow::response(400, "Invalid JSON");
+        if (!body || !body.has("name")) {
+            return crow::response(400, "Missing 'name' field");
         }
 
         std::string name = body["name"].s();
-        int value = body["value"].i();
 
         std::ostringstream oss;
-        oss << "INSERT INTO " << mysqlpp::quote_only << entity
-            << " (name, value) VALUES ("
-            << mysqlpp::quote << name << ", "
-            << mysqlpp::quote << value << ")";
+        oss << "INSERT INTO `" << entity
+            << "` (`name`) VALUES ('"
+            << name << "')";
+
+        CROW_LOG_INFO << "SQL: " << oss.str();
+
         mysqlpp::Query query = mysql.query(oss.str());
 
         if (query.execute()) {
             return crow::response(201, "Entity created");
         } else {
-            return crow::response(500, "Insert failed");
+            return crow::response(500, query.error());
         }
     });
 }
-
-
 // UPDATE
-
 void crow_update_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
-    CROW_ROUTE(app, "/<string>/<int>").methods(crow::HTTPMethod::PUT)
+    CROW_ROUTE(app, "/update/<string>/<int>").methods(crow::HTTPMethod::PUT)
     ([&mysql](const crow::request& req, const std::string& entity, int id)
     {
         auto body = crow::json::load(req.body);
@@ -48,8 +45,8 @@ void crow_update_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
         int value = body["value"].i();
 
         std::ostringstream oss;
-        oss << "UPDATE " << mysqlpp::quote_only << entity
-            << " SET name=" << mysqlpp::quote << name
+        oss << "UPDATE `" << entity
+            << "` SET name=" << mysqlpp::quote << name
             << ", value=" << mysqlpp::quote << value
             << " WHERE id=" << mysqlpp::quote << id;
         mysqlpp::Query query = mysql.query(oss.str());
@@ -66,7 +63,7 @@ void crow_update_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 // DELETE
 void crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
-    CROW_ROUTE(app, "/<string>/<int>").methods(crow::HTTPMethod::DELETE)
+    CROW_ROUTE(app, "/delete/<string>/<int>").methods(crow::HTTPMethod::DELETE)
     ([&mysql](const std::string& entity, int id)
     {
         std::ostringstream oss;
@@ -89,7 +86,7 @@ void crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 // JOIN
 void crow_get_joined_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
-    CROW_ROUTE(app, "/<string>/join/<string>").methods(crow::HTTPMethod::GET)
+    CROW_ROUTE(app, "/join/<string>/<string>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& entity1, const std::string& entity2)
     {
         // Example: JOIN on `entity1.id = entity2.<entity1>_id`
@@ -113,11 +110,11 @@ void crow_get_joined_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
         }
     });
 }
-// ORDER
 
+// ORDER
 void crow_get_ordered_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
-    CROW_ROUTE(app, "/<string>/order/<string>").methods(crow::HTTPMethod::GET)
+    CROW_ROUTE(app, "/order/<string>/<string>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& entity, const std::string& column)
     {
         std::ostringstream oss;
