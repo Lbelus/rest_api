@@ -40,8 +40,8 @@ void crow_get_all_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
         else
         {
             return crow::response(404, "Entity not found");
-    }
-});
+        }
+    });
 }
 
 void crow_get_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
