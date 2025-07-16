@@ -46,8 +46,29 @@ rest_api_init_db()
     );
 
     INSERT INTO users (name) VALUES ('Alice'), ('Bob');
+    
+    CREATE TABLE IF NOT EXISTS orders (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        designation VARCHAR(100) NOT NULL,
+        users_id INT NOT NULL,
+        FOREIGN KEY (users_id) REFERENCES users(id)
+    );
+
+   INSERT INTO orders (designation, users_id) VALUES 
+    ('Potato', 1),
+    ('Pasta', 2);
 EOF
 }
+
+
+rest_api_drop_db()
+{
+    sudo docker exec -i mysqlserver mysql -u dev_admin -pdev_admin test_rest_DB <<EOF
+        DROP TABLE IF EXISTS orders;
+        DROP TABLE IF EXISTS users;
+EOF
+}
+
 
 rest_api_test_read_all()
 {
@@ -86,6 +107,18 @@ rest_api_test_delete_entity()
     ip_port=$1
     id=$2
     curl -X GET http://$ip_port/read/users/$id
+}
+
+rest_api_test_join_entity()
+{
+    ip_port=$1
+    curl http://$ip_port/join/users/orders
+}
+
+rest_api_test_order_entity()
+{
+    ip_port=$1
+    curl http://$ip_port/order/users/name
 }
 
 re()

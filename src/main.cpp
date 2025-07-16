@@ -12,8 +12,7 @@ int main()
 	crow_delete_entity_by_id(app, conn);
 	crow_get_joined_entities(app, conn);
 	crow_get_ordered_entities(app, conn);
-    
-    app.port(3004).multithreaded().run();
 
+    app.port(3004).multithreaded().run();
     return EXIT_SUCCESS;
 }
