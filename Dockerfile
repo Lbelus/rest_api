@@ -15,6 +15,7 @@ RUN apt-get update && \
     libasio-dev \
     default-libmysqlclient-dev \ 
     libmysql++-dev \
+    libhiredis-dev \
     curl && \
     apt-get autoremove -y && \
     apt-get clean && \
@@ -31,6 +32,18 @@ RUN wget -O CrowCpp.zip https://github.com/CrowCpp/Crow/archive/refs/heads/maste
     make install && \
     cd ../../ && \
     rm -rf CrowCpp.zip Crow-master
+
+# Install redis-plus-plus
+RUN wget -O redis-plus-plus.zip https://github.com/sewenew/redis-plus-plus/archive/refs/heads/master.zip && \
+    unzip redis-plus-plus.zip && \
+    cd redis-plus-plus-master && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make && \
+    make install && \
+    cd ../../ && \
+    rm -rf redis-plus-plus.zip redis-plus-plus-master
 
 # Install nlohmann/json
 RUN git clone https://github.com/nlohmann/json.git /usr/src/nlohmann_json && \
