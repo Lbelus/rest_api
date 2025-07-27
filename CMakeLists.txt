@@ -16,6 +16,17 @@ find_library(MYSQLPP_LIB mysqlpp REQUIRED)
 add_library(rest_apiObj OBJECT ${SOURCES})
 target_link_libraries(rest_apiObj PRIVATE nlohmann_json::nlohmann_json)
 
+# Find and link hiredis library
+find_path(HIREDIS_HEADER hiredis)
+target_include_directories(rest_apiObj PUBLIC ${HIREDIS_HEADER})
+find_library(HIREDIS_LIB hiredis)
+target_link_libraries(rest_apiObj PRIVATE ${HIREDIS_LIB})
+
+# Find and link redis-plus-plus library
+find_path(REDIS_PLUS_PLUS_HEADER sw)
+target_include_directories(rest_apiObj PUBLIC ${REDIS_PLUS_PLUS_HEADER})
+find_library(REDIS_PLUS_PLUS_LIB redis++)
+target_link_libraries(rest_apiObj PRIVATE ${REDIS_PLUS_PLUS_LIB})
 add_executable(rest_api src/main.cpp)
 
 target_link_libraries(rest_api
