@@ -1,31 +1,87 @@
 #include <rest_api.hpp>
 #include <unordered_map>
+#include <mock_querry_builder.hpp>
 
+std::string create_key_string(const crow::json::rvalue& data)
+{
+    std::string result = "(";
+    auto it = data.begin();
+    auto end = data.end();
+    while (it != end)
+    {
+        result += "`" + std::string(it->key()) + "`";
+        ++it;
+        if (it != end)
+        {
+            result += ", ";
+        }
+    }
+    result += ")";
+    return result;
+}
+
+std::string create_value_row_string(const crow::json::rvalue& row)
+{
+    std::string result = "(";
+    auto it = row.begin();
+    auto end = row.end();
+    while (it != end)
+    {
+        result += "'" + std::string((*it).s()) + "'";
+        ++it;
+        if (it != end)
+        {
+            result += ", ";
+        }
+    }
+    result += ")";
+    return result;
+}
+
+std::string create_values_string(const crow::json::rvalue& data)
+{
+    std::string result;
+    auto it = data.begin();
+    auto end = data.end();
+    while (it != end)
+    {
+        result += create_value_row_string(*it);
+        ++it; 
+        if (it != end)
+        {
+            result += ", ";
+        }
+    }
+    // msg += ";";
+    return result;
+}
 // INSERT 
 void crow_create_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/create/<string>").methods(crow::HTTPMethod::POST)
-    ([&mysql](const crow::request& req, const std::string& entity)
+    ([&mysql](const crow::request& req, const std::string& table_name)
     {
-        auto body = crow::json::load(req.body);
-        if (!body || !body.has("name")) {
-            return crow::response(400, "Missing 'name' field");
+        crow::json::rvalue data = crow::json::load(req.body);
+        if (!data)
+        {
+            return crow::response(400, "Invalid JSON - expected list of objects");
         }
 
-        std::string name = body["name"].s();
+        std::string msg("INSERT INTO `" + table_name + "` ");
 
-        std::ostringstream oss;
-        oss << "INSERT INTO `" << entity
-            << "` (`name`) VALUES ('"
-            << name << "')";
+        // Get keys from first object only
+        msg += create_key_string(data[0]);
+        msg += " VALUES ";
+        msg += create_values_string(data);
+        CROW_LOG_INFO << "SQL: " << msg;
+        mysqlpp::Query query = mysql.query(msg);
 
-        CROW_LOG_INFO << "SQL: " << oss.str();
-
-        mysqlpp::Query query = mysql.query(oss.str());
-
-        if (query.execute()) {
+        if (query.execute())
+        {
             return crow::response(201, "Entity created");
-        } else {
+        }
+        else
+        {
             return crow::response(500, query.error());
         }
     });
