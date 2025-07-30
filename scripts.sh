@@ -89,7 +89,7 @@ rest_api_test_create_entity()
     entry=$2
     curl -X POST http://$ip_port/create/users \
         -H "Content-Type: application/json" \
-        -d "{\"name\": \"$entry\"}"
+        -d "[{\"name\": \"$entry\"}]"
 }
 
 rest_api_test_update_entity()
@@ -106,7 +106,7 @@ rest_api_test_delete_entity()
 {
     ip_port=$1
     id=$2
-    curl -X GET http://$ip_port/read/users/$id
+    curl -X DELETE http://$ip_port/delete/users/$id
 }
 
 rest_api_test_join_entity()

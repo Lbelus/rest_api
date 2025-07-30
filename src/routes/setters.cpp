@@ -55,6 +55,55 @@ std::string create_values_string(const crow::json::rvalue& data)
     // msg += ";";
     return result;
 }
+
+
+std::string crow_json_converter(const crow::json::rvalue& val)
+{
+    std::string result;
+    switch (val.t())
+    {
+        case crow::json::type::String:
+            result += "'" + std::string(val.s()) + "'";
+            break;
+        case crow::json::type::Number:
+            result += std::to_string(val.i());
+            break;
+        case crow::json::type::True:
+            result += "TRUE";
+            break;
+        case crow::json::type::False:
+            result += "FALSE";
+            break;
+        default:
+            result += "NULL";
+            break;
+    }
+    return result;
+}
+
+
+std::string create_update_fields_string(const crow::json::rvalue& data)
+{
+    std::string result;
+    auto it = data.begin();
+    auto end = data.end();
+    while (it != end)
+    {
+        const auto& key = it->key();
+        const auto& val = *it;
+        result += "`" + std::string(it->key()) + "`=";
+        result += crow_json_converter(val);
+        ++it;
+        if (it != end)
+        {
+            result += ", ";
+        }
+    }
+    return result;
+}
+
+
+
 // INSERT 
 void crow_create_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
@@ -73,6 +122,7 @@ void crow_create_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
         msg += create_key_string(data[0]);
         msg += " VALUES ";
         msg += create_values_string(data);
+
         CROW_LOG_INFO << "SQL: " << msg;
         mysqlpp::Query query = mysql.query(msg);
 
@@ -91,31 +141,33 @@ void crow_create_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 void crow_update_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/update/<string>/<int>").methods(crow::HTTPMethod::PUT)
-    ([&mysql](const crow::request& req, const std::string& entity, int id)
+    ([&mysql](const crow::request& req, const std::string& table_name, int id)
     {
-        auto body = crow::json::load(req.body);
-        if (!body || !body.has("name")) {
+         crow::json::rvalue data = crow::json::load(req.body);
+        if (!data)
+        {
             return crow::response(400, "Missing or invalid JSON");
         }
+ 
+        std::string msg("UPDATE `" + table_name + "` SET ");
+        msg += create_update_fields_string(data);
+        msg += " WHERE `id` = " + std::to_string(id);
+        
+        CROW_LOG_INFO << "SQL: " << msg;
 
-        std::string name = body["name"].s();
+        mysqlpp::Query query = mysql.query(msg);
 
-        std::ostringstream oss;
-        oss << "UPDATE `" << entity << "` "
-            << "SET `name`='" << name
-            << "' WHERE `id`=" << id;
-
-        CROW_LOG_INFO << "SQL: " << oss.str();
-
-        mysqlpp::Query query = mysql.query(oss.str());
-
-        if (!query) {
+        if (!query)
+        {
             return crow::response(500, query.error());
         }
 
-        if (query.execute()) {
+        if (query.execute())
+        {
             return crow::response(200, "Entity updated");
-        } else {
+        }
+        else
+        {
             return crow::response(404, "Update failed or entity not found");
         }
     });
@@ -126,13 +178,13 @@ void crow_update_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 void crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/delete/<string>/<int>").methods(crow::HTTPMethod::DELETE)
-    ([&mysql](const std::string& entity, int id)
+    ([&mysql](const std::string& table_name, int id)
     {
-        std::ostringstream oss;
-        oss << "DELETE FROM `" << entity
-            << "` WHERE `id`=" << id;
-
-        mysqlpp::Query query = mysql.query(oss.str());
+        std::string msg = "DELETE FROM `" + table_name + "` WHERE `id` =" + std::to_string(id);
+        // oss << "DELETE FROM `" << entity
+        //     << "` WHERE `id`=" << id;
+        CROW_LOG_INFO << "SQL: " << msg;
+        mysqlpp::Query query = mysql.query(msg);
 
         if (query.execute())
         {
@@ -144,7 +196,6 @@ void crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
         }
     });
 }
-
 
 
 //redis 
