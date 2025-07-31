@@ -60,7 +60,6 @@ rest_api_init_db()
 EOF
 }
 
-
 rest_api_drop_db()
 {
     sudo docker exec -i mysqlserver mysql -u dev_admin -pdev_admin test_rest_DB <<EOF
@@ -118,7 +117,7 @@ rest_api_test_join_entity()
 rest_api_test_order_entity()
 {
     ip_port=$1
-    curl http://$ip_port/order/users/name
+    curl http://$ip_port/order/users/name/asc
 }
 
 re()

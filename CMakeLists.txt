@@ -4,17 +4,28 @@ project(rest_api VERSION 0.0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories(/usr/include/mysql)
+set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
+file(GLOB_RECURSE SRC_DIRS LIST_DIRECTORIES true "${SRC_DIR}/*")
+list(FILTER SRC_DIRS EXCLUDE REGEX "\\.[^.]+$")
+
+include_directories(
+    ${PROJECT_SOURCE_DIR}/include
+    /usr/include/mysql
+    ${SRC_DIRS}
+)
+
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 list(FILTER SOURCES EXCLUDE REGEX ".*main\\.cpp$")
 
+add_library(rest_apiObj OBJECT ${SOURCES})
+
 find_package(Threads REQUIRED)
+
 find_package(nlohmann_json 3.11.3 REQUIRED)
+target_link_libraries(rest_apiObj PRIVATE nlohmann_json::nlohmann_json)
+
 find_library(MYSQLPP_LIB mysqlpp REQUIRED)
 
-add_library(rest_apiObj OBJECT ${SOURCES})
-target_link_libraries(rest_apiObj PRIVATE nlohmann_json::nlohmann_json)
 
 # Find and link hiredis library
 find_path(HIREDIS_HEADER hiredis)
@@ -27,8 +38,8 @@ find_path(REDIS_PLUS_PLUS_HEADER sw)
 target_include_directories(rest_apiObj PUBLIC ${REDIS_PLUS_PLUS_HEADER})
 find_library(REDIS_PLUS_PLUS_LIB redis++)
 target_link_libraries(rest_apiObj PRIVATE ${REDIS_PLUS_PLUS_LIB})
-add_executable(rest_api src/main.cpp)
 
+add_executable(rest_api src/main.cpp)
 target_link_libraries(rest_api
     PRIVATE
     rest_apiObj

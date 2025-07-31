@@ -1,9 +1,8 @@
 #include <rest_api.hpp>
-#include <mock_querry_builder.hpp>
+// #include <mock_querry_builder.hpp>
 
 // FROM SELECT WHERE
 // we are at the MVP stage security and validation is not an immediate concern. 
-
 
 auto test_print(auto result)
 {
@@ -21,21 +20,44 @@ auto test_print(auto result)
     return out;
 }
 
-
 void crow_get_all_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/read/<string>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& key)
     {
-        std::ostringstream oss;
-        oss << "SELECT * FROM " << '`' << key << '`';
-        mysqlpp::Query query = mysql.query(oss.str());
-
+        std::string msg("SELECT * FROM ");
+        msg += "`" + key + "`";
+        mysqlpp::Query query = mysql.query(msg);
+        CROW_LOG_INFO << "SQL: " << msg;
         if (auto result = query.store())
         {
             std::ostringstream out;
-            // out << result;
             out = test_print(result);
+            return crow::response(200, out.str());
+        }
+        else
+        {
+            return crow::response(404, "Entity not found");
+        }
+    });
+}
+
+void crow_get_entry(crow::SimpleApp& app, mysqlpp::Connection& mysql)
+{
+    CROW_ROUTE(app, "/read/<string>/<int>").methods(crow::HTTPMethod::GET)
+    ([&mysql](const std::string& key, int id)
+    {
+        // oss << "SELECT * FROM `" << key << "` WHERE id=" << id;
+        std::string msg("SELECT * FROM `");
+        msg += key + "` WHERE id=" + std::to_string(id);
+        
+        mysqlpp::Query query = mysql.query(msg);
+        
+        if (auto result = query.store())
+        {
+            std::ostringstream out;
+            out = test_print(result);
+            // out << result;
             return crow::response(200, out.str());
         }
         else
@@ -50,11 +72,10 @@ void crow_get_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
     CROW_ROUTE(app, "/read/<string>/<int>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& key, int id)
     {
-        std::ostringstream oss;
-        oss << "SELECT * FROM `" << key << "` WHERE id=" << id;
+        std::string msg("SELECT * FROM `");
+        msg += key + "` WHERE id=" + std::to_string(id);
 
-        mysqlpp::Query query = mysql.query(oss.str());
-
+        mysqlpp::Query query = mysql.query(msg); 
         if (auto result = query.store())
         {
             std::ostringstream out;
@@ -73,17 +94,17 @@ void crow_get_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 void crow_get_joined_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/join/<string>/<string>").methods(crow::HTTPMethod::GET)
-    ([&mysql](const std::string& entity1, const std::string& entity2)
+    ([&mysql](const std::string& table_name_A, const std::string& table_name_B)
     {
-        // Join condition: `entity1`.`id` = `entity2`.`entity1_id`
-        std::ostringstream oss;
-        oss << "SELECT * FROM `" << entity1 << "` "
-            << "JOIN `" << entity2 << "` "
-            << "ON `" << entity1 << "`.`id` = `" << entity2 << "`.`" << entity1 << "_id`";
+        // Join condition: `table_name_A`.`id` = `table_name_B`.`table_name_A_id`
+        std::string msg("SELECT * FROM `");
 
-        CROW_LOG_INFO << "SQL: " << oss.str();
-        mysqlpp::Query query = mysql.query(oss.str());
+        msg += table_name_A + "` ";
+        msg += "JOIN `" + table_name_B + "` ";
+        msg += "ON `" + table_name_A + "`.`id` = `" + table_name_B + "`.`" + table_name_A + "_id`"; 
 
+        CROW_LOG_INFO << "SQL: " << msg;
+        mysqlpp::Query query = mysql.query(msg);
         if (!query)
             return crow::response(500, query.error());
 
@@ -103,16 +124,15 @@ void crow_get_joined_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 // ORDER
 void crow_get_ordered_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
-    CROW_ROUTE(app, "/order/<string>/<string>").methods(crow::HTTPMethod::GET)
-    ([&mysql](const std::string& entity, const std::string& column)
+    CROW_ROUTE(app, "/order/<string>/<string>/<string>").methods(crow::HTTPMethod::GET)
+    ([&mysql](const std::string& table_name, const std::string& column, const std::string& order)
     {
-        std::ostringstream oss;
-        oss << "SELECT * FROM `" << entity << "` "
-            << "ORDER BY `" << column << "` ASC";
+        std::string msg = "SELECT * FROM `";
+        msg += table_name + "` ";
+        msg += "ORDER BY `" + column + "` " + order;
+        CROW_LOG_INFO << "SQL: " << msg;
 
-        CROW_LOG_INFO << "SQL: " << oss.str();
-
-        mysqlpp::Query query = mysql.query(oss.str());
+        mysqlpp::Query query = mysql.query(msg);
 
         if (!query)
             return crow::response(500, query.error());
@@ -129,6 +149,9 @@ void crow_get_ordered_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
         }
     });
 }
+
+
+// REDIS
 
 
 void crow_key(crow::SimpleApp& app, sw::redis::Redis& redis)
