@@ -1,8 +1,8 @@
 #include <rest_api.hpp>
 #include <unordered_map>
-#include <sql_json_utils.hpp>
+#include <mysql_utils.hpp>
 
-using namespace sql_utils;
+using namespace mysql_utils;
 
 
 std::string create_update_fields_string(const crow::json::rvalue& data)
@@ -24,8 +24,6 @@ std::string create_update_fields_string(const crow::json::rvalue& data)
     }
     return result;
 }
-
-
 
 // INSERT 
 void crow_create_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
