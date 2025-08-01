@@ -80,4 +80,4 @@ namespace sql_utils
         }
         return result;
     }
-}
+};
