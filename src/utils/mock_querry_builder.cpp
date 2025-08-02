@@ -1,5 +1,6 @@
-#include <mock_querry_builder.hpp>
-
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 char* concat_string(int argc, ...)
 {
     int len = 0;

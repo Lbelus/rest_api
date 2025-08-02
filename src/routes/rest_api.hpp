@@ -11,6 +11,8 @@
 #include <string>
 
 
+typedef void (*mysql_func_ptr_t) (crow::SimpleApp&, mysqlpp::Connection&);
+
 void crow_get_all_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql);
 void crow_get_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql);
 void crow_create_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql);
