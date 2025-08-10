@@ -9,7 +9,7 @@ int main()
     {
             &crow_get_all_entity,
             &crow_get_entity_by_id,
-            &crow_create_entity,
+            &crow_insert_entity,
             &crow_update_entity_by_id,
             &crow_delete_entity_by_id,
             &crow_get_joined_entities,

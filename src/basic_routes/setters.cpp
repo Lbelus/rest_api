@@ -1,9 +1,8 @@
 #include <rest_api.hpp>
 #include <unordered_map>
 #include <mysql_utils.hpp>
-
+#include <db_repository.hpp>
 using namespace mysql_utils;
-
 
 std::string create_update_fields_string(const crow::json::rvalue& data)
 {
@@ -26,32 +25,25 @@ std::string create_update_fields_string(const crow::json::rvalue& data)
 }
 
 // INSERT 
-void crow_create_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
+void crow_insert_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
-    CROW_ROUTE(app, "/create/<string>").methods(crow::HTTPMethod::POST)
+    CROW_ROUTE(app, "/insert/<string>").methods(crow::HTTPMethod::POST)
     ([&mysql](const crow::request& req, const std::string& table_name)
     {
+        mysql_repository repo(mysql);
         crow::json::rvalue data = crow::json::load(req.body);
         if (!data)
         {
             return crow::response(400, "Invalid JSON - expected list of objects");
-        }
-        std::string msg("INSERT INTO `" + table_name + "` ");
-        // Get keys from first object only
-        msg += create_key_string(data[0]);
-        msg += " VALUES ";
-        msg += create_values_string(data);
-        CROW_LOG_INFO << "SQL: " << msg;
-        mysqlpp::Query query = mysql.query(msg);
-
-        if (query.execute())
+        } 
+        const std::string& keys = create_key_string(data[0]);
+        const std::string& values = create_values_string(data);
+        bool result = repo.insert(table_name, keys, values);
+        if (result)
         {
-            return crow::response(201, "Entity created");
+            return crow::response(500, repo.error());
         }
-        else
-        {
-            return crow::response(500, query.error());
-        }
+        return crow::response(201, "Entity created");
     });
 }
 
@@ -61,36 +53,21 @@ void crow_update_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
     CROW_ROUTE(app, "/update/<string>/<int>").methods(crow::HTTPMethod::PUT)
     ([&mysql](const crow::request& req, const std::string& table_name, int id)
     {
-         crow::json::rvalue data = crow::json::load(req.body);
+        mysql_repository repo(mysql);
+        crow::json::rvalue data = crow::json::load(req.body);
         if (!data)
         {
             return crow::response(400, "Missing or invalid JSON");
-        }
- 
-        std::string msg("UPDATE `" + table_name + "` SET ");
-        msg += create_update_fields_string(data);
-        msg += " WHERE `id` = " + std::to_string(id);
- 
-        CROW_LOG_INFO << "SQL: " << msg;
-
-        mysqlpp::Query query = mysql.query(msg);
-
-        if (!query)
+        } 
+        std::string fields_string = create_update_fields_string(data);
+        bool result = repo.update(table_name, fields_string, id);
+        if (result)
         {
-            return crow::response(500, query.error());
+            return crow::response(500, repo.error());
         }
-
-        if (query.execute())
-        {
-            return crow::response(200, "Entity updated");
-        }
-        else
-        {
-            return crow::response(404, "Update failed or entity not found");
-        }
+        return crow::response(201, "Entity updated");
     });
 }
-
 
 // DELETE
 void crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
@@ -98,23 +75,18 @@ void crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
     CROW_ROUTE(app, "/delete/<string>/<int>").methods(crow::HTTPMethod::DELETE)
     ([&mysql](const std::string& table_name, int id)
     {
-        std::string msg = "DELETE FROM `" + table_name + "` WHERE `id` =" + std::to_string(id);
-        // oss << "DELETE FROM `" << entity
-        //     << "` WHERE `id`=" << id;
-        CROW_LOG_INFO << "SQL: " << msg;
-        mysqlpp::Query query = mysql.query(msg);
-
-        if (query.execute())
+        mysql_repository repo(mysql);
+        bool result = repo.delete__(table_name, id);
+        if (result)
         {
-            return crow::response(200, "Entity deleted");
+            return crow::response(500, repo.error());
         }
-        else
-        {
-            return crow::response(404, "Entity not found or delete failed");
-        }
+        return crow::response(201, "Entity deleted");
     });
 }
 
+
+/// REDIS IS CURRENTLY OUT OF SCOPE
 
 //redis 
 
