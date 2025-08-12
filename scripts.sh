@@ -31,6 +31,57 @@ rest_api_rm_dev()
     sudo docker rm cont_llvm_mysql_crow
 }
 
+rest_api_test_read_all()
+{
+    ip_port=$1
+    curl -X GET http://$ip_port/read/users
+}
+
+rest_api_test_read_by_id()
+{
+    ip_port=$1
+    id=$2
+    curl -X GET http://$ip_port/read/users/$id
+}
+
+rest_api_test_insert_entity()
+{
+    ip_port=$1
+    entry=$2
+    curl -X POST http://$ip_port/insert/users \
+        -H "Content-Type: application/json" \
+        -d "[{\"name\": \"$entry\"}]"
+}
+
+rest_api_test_update_entity()
+{
+    ip_port=$1
+    id=$2
+    entry=$3
+    curl -X PUT http://$ip_port/update/users/$id \
+        -H "Content-Type: application/json" \
+        -d "{\"name\": \"$entry\"}"
+}
+
+rest_api_test_delete_entity()
+{
+    ip_port=$1
+    id=$2
+    curl -X DELETE http://$ip_port/delete/users/$id
+}
+
+rest_api_test_join_entity()
+{
+    ip_port=$1
+    curl http://$ip_port/join/users/orders
+}
+
+rest_api_test_order_entity()
+{
+    ip_port=$1
+    curl http://$ip_port/order/users/name/ASC
+}
+
 rest_api_get_container_ip()
 {
     arg=$1

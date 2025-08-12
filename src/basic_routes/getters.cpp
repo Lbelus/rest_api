@@ -1,23 +1,46 @@
 #include <rest_api.hpp>
+#include <vector>
+#include <db_repository.hpp>
 // #include <mock_querry_builder.hpp>
 
 // FROM SELECT WHERE
 // we are at the MVP stage security and validation is not an immediate concern. 
-
-auto test_print(auto result)
+auto test_print(const std::vector<mysqlpp::Row>& result)
 {
     std::ostringstream out;
     for (const auto& row : result)
     {
+        out << "row: ";
         for (size_t i = 0; i < row.size(); ++i)
         {
-            out << row[i];
-            if (i != row.size() - 1)
-                out << ", ";
+            out << row[i] << (i + 1 < row.size() ? ", " : "");
         }
         out << "\n";
     }
     return out;
+}
+
+crow::json::wvalue to_crow_json(const std::vector<mysqlpp::Row>& rows,
+                                const std::vector<std::string>& names)
+{
+    crow::json::wvalue::list arr;
+    for (const auto& row : rows)
+    {
+        crow::json::wvalue obj;
+        for (size_t c = 0; c < names.size(); ++c)
+        {
+            if (row == NULL)
+            {
+                obj[names[c]] = nullptr;
+            }
+            else
+            {
+                obj[names[c]] = std::string(row[c].c_str());
+            }
+        }
+        arr.push_back(std::move(obj));
+    }
+    return crow::json::wvalue(std::move(arr));
 }
 
 void crow_get_all_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
@@ -25,15 +48,14 @@ void crow_get_all_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
     CROW_ROUTE(app, "/read/<string>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& key)
     {
-        std::string msg("SELECT * FROM ");
-        msg += "`" + key + "`";
-        mysqlpp::Query query = mysql.query(msg);
-        CROW_LOG_INFO << "SQL: " << msg;
-        if (auto result = query.store())
-        {
-            std::ostringstream out;
-            out = test_print(result);
-            return crow::response(200, out.str());
+        mysql_repository repo(mysql);
+        bool result = repo.select_all(key);
+        if (!result)
+        { 
+            const std::vector<mysqlpp::Row>& rows = repo.get_rows();
+            const std::vector<std::string>& names = repo.get_names();
+            crow::json::wvalue res = to_crow_json(rows, names);
+            return crow::response(200, res);
         }
         else
         {
@@ -47,18 +69,14 @@ void crow_get_entry(crow::SimpleApp& app, mysqlpp::Connection& mysql)
     CROW_ROUTE(app, "/read/<string>/<int>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& key, int id)
     {
-        // oss << "SELECT * FROM `" << key << "` WHERE id=" << id;
-        std::string msg("SELECT * FROM `");
-        msg += key + "` WHERE id=" + std::to_string(id);
-        
-        mysqlpp::Query query = mysql.query(msg);
-        
-        if (auto result = query.store())
-        {
-            std::ostringstream out;
-            out = test_print(result);
-            // out << result;
-            return crow::response(200, out.str());
+        mysql_repository repo(mysql);
+        bool result = repo.select_all(key);
+        if (!result)
+        { 
+            const std::vector<mysqlpp::Row>& rows = repo.get_rows();
+            const std::vector<std::string>& names = repo.get_names();
+            crow::json::wvalue res = to_crow_json(rows, names);
+            return crow::response(200, res);
         }
         else
         {
@@ -72,16 +90,14 @@ void crow_get_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
     CROW_ROUTE(app, "/read/<string>/<int>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& key, int id)
     {
-        std::string msg("SELECT * FROM `");
-        msg += key + "` WHERE id=" + std::to_string(id);
-
-        mysqlpp::Query query = mysql.query(msg); 
-        if (auto result = query.store())
-        {
-            std::ostringstream out;
-            out = test_print(result);
-            // out << result;
-            return crow::response(200, out.str());
+        mysql_repository repo(mysql);
+        bool result = repo.select_by_id(key, id);
+        if (!result)
+        { 
+            const std::vector<mysqlpp::Row>& rows = repo.get_rows();
+            const std::vector<std::string>& names = repo.get_names();
+            crow::json::wvalue res = to_crow_json(rows, names);
+            return crow::response(200, res);
         }
         else
         {
@@ -96,27 +112,18 @@ void crow_get_joined_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
     CROW_ROUTE(app, "/join/<string>/<string>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& table_name_A, const std::string& table_name_B)
     {
-        // Join condition: `table_name_A`.`id` = `table_name_B`.`table_name_A_id`
-        std::string msg("SELECT * FROM `");
-
-        msg += table_name_A + "` ";
-        msg += "JOIN `" + table_name_B + "` ";
-        msg += "ON `" + table_name_A + "`.`id` = `" + table_name_B + "`.`" + table_name_A + "_id`"; 
-
-        CROW_LOG_INFO << "SQL: " << msg;
-        mysqlpp::Query query = mysql.query(msg);
-        if (!query)
-            return crow::response(500, query.error());
-
-        if (auto result = query.store())
-        {
-            std::ostringstream out;
-            out = test_print(result);
-            return crow::response(200, out.str());
+        mysql_repository repo(mysql);
+        bool result = repo.join(table_name_A, table_name_B);
+        if (!result)
+        { 
+            const std::vector<mysqlpp::Row>& rows = repo.get_rows();
+            const std::vector<std::string>& names = repo.get_names();
+            crow::json::wvalue res = to_crow_json(rows, names);
+            return crow::response(200, res);
         }
         else
         {
-            return crow::response(500, "Join failed");
+            return crow::response(404, "Entity not found");
         }
     });
 }
@@ -127,25 +134,18 @@ void crow_get_ordered_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
     CROW_ROUTE(app, "/order/<string>/<string>/<string>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& table_name, const std::string& column, const std::string& order)
     {
-        std::string msg = "SELECT * FROM `";
-        msg += table_name + "` ";
-        msg += "ORDER BY `" + column + "` " + order;
-        CROW_LOG_INFO << "SQL: " << msg;
-
-        mysqlpp::Query query = mysql.query(msg);
-
-        if (!query)
-            return crow::response(500, query.error());
-
-        if (auto result = query.store())
-        {
-            std::ostringstream out;
-            out = test_print(result);
-            return crow::response(200, out.str());
+        mysql_repository repo(mysql);
+        bool result = repo.order(table_name, column, order);
+        if (!result)
+        { 
+            const std::vector<mysqlpp::Row>& rows = repo.get_rows();
+            const std::vector<std::string>& names = repo.get_names();
+            crow::json::wvalue res = to_crow_json(rows, names);
+            return crow::response(200, res);
         }
         else
         {
-            return crow::response(500, "Order query failed");
+            return crow::response(404, "Entity not found");
         }
     });
 }
@@ -323,7 +323,6 @@ void crow_flushall(crow::SimpleApp& app, sw::redis::Redis& redis)
         return crow::response(200, "data has been flushed");
     });
 }
-
 
 void crow_info(crow::SimpleApp& app, sw::redis::Redis& redis)
 {

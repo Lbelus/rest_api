@@ -25,7 +25,7 @@ find_package(nlohmann_json 3.11.3 REQUIRED)
 target_link_libraries(rest_apiObj PRIVATE nlohmann_json::nlohmann_json)
 
 find_library(MYSQLPP_LIB mysqlpp REQUIRED)
-
+find_library(MYSQLCLIENT_LIB mysqlclient REQUIRED)
 
 # Find and link hiredis library
 find_path(HIREDIS_HEADER hiredis)
@@ -44,5 +44,6 @@ target_link_libraries(rest_api
     PRIVATE
     rest_apiObj
     ${MYSQLPP_LIB}
+    ${MYSQLCLIENT_LIB}
     Threads::Threads
 )
