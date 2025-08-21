@@ -11,9 +11,11 @@ auto test_print(const std::vector<mysqlpp::Row>& result)
     for (const auto& row : result)
     {
         out << "row: ";
+
         for (size_t i = 0; i < row.size(); ++i)
         {
-            out << row[i] << (i + 1 < row.size() ? ", " : "");
+            
+            out << row[(int)i] << (i + 1 < row.size() ? ", " : "");
         }
         out << "\n";
     }
@@ -27,15 +29,16 @@ crow::json::wvalue to_crow_json(const std::vector<mysqlpp::Row>& rows,
     for (const auto& row : rows)
     {
         crow::json::wvalue obj;
-        for (size_t c = 0; c < names.size(); ++c)
+        for (size_t index = 0; index < names.size(); ++index)
         {
+            int pos = (int)index;
             if (row == NULL)
             {
-                obj[names[c]] = nullptr;
+                obj[names[pos]] = nullptr;
             }
             else
             {
-                obj[names[c]] = std::string(row[c].c_str());
+                obj[names[pos]] = std::string(row[pos].c_str());
             }
         }
         arr.push_back(std::move(obj));
@@ -64,26 +67,26 @@ void crow_get_all_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
     });
 }
 
-void crow_get_entry(crow::SimpleApp& app, mysqlpp::Connection& mysql)
-{
-    CROW_ROUTE(app, "/read/<string>/<int>").methods(crow::HTTPMethod::GET)
-    ([&mysql](const std::string& key, int id)
-    {
-        mysql_repository repo(mysql);
-        bool result = repo.select_all(key);
-        if (!result)
-        { 
-            const std::vector<mysqlpp::Row>& rows = repo.get_rows();
-            const std::vector<std::string>& names = repo.get_names();
-            crow::json::wvalue res = to_crow_json(rows, names);
-            return crow::response(200, res);
-        }
-        else
-        {
-            return crow::response(404, "Entity not found");
-        }
-    });
-}
+// void crow_get_entry(crow::SimpleApp& app, mysqlpp::Connection& mysql)
+// {
+//     CROW_ROUTE(app, "/read/<string>/<int>").methods(crow::HTTPMethod::GET)
+//     ([&mysql](const std::string& key, int id)
+//     {
+//         mysql_repository repo(mysql);
+//         bool result = repo.select_all(key);
+//         if (!result)
+//         { 
+//             const std::vector<mysqlpp::Row>& rows = repo.get_rows();
+//             const std::vector<std::string>& names = repo.get_names();
+//             crow::json::wvalue res = to_crow_json(rows, names);
+//             return crow::response(200, res);
+//         }
+//         else
+//         {
+//             return crow::response(404, "Entity not found");
+//         }
+//     });
+// }
 
 void crow_get_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {

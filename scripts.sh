@@ -176,7 +176,18 @@ re()
     clear
     cd build/
     rm -r *
-    cmake ..
+    cmake .. -DENABLE_BASIC_FLAGS=ON
+    make
+    cd ..
+    ./build/rest_api
+}
+
+re_full()
+{
+    clear
+    cd build/
+    rm -r *
+    cmake .. -DENABLE_FULL_FLAGS=ON
     make
     cd ..
     ./build/rest_api
