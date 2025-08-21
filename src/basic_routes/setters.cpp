@@ -11,7 +11,6 @@ std::string create_update_fields_string(const crow::json::rvalue& data)
     auto end = data.end();
     while (it != end)
     {
-        const auto& key = it->key();
         const auto& val = *it;
         result += "`" + std::string(it->key()) + "`=";
         result += crow_json_converter(val);

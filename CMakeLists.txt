@@ -40,6 +40,27 @@ find_library(REDIS_PLUS_PLUS_LIB redis++)
 target_link_libraries(rest_apiObj PRIVATE ${REDIS_PLUS_PLUS_LIB})
 
 add_executable(rest_api src/main.cpp)
+
+
+if (ENABLE_BASIC_FLAGS)
+    target_compile_options(rest_apiObj PRIVATE 
+    $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Werror -fsanitize=address >
+    )
+    target_compile_options(rest_api PRIVATE 
+    $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Werror -fsanitize=address >
+    )
+    target_link_options(rest_api PRIVATE -fsanitize=address)
+endif()
+if (ENABLE_FULL_FLAGS)
+    target_compile_options(rest_apiObj PRIVATE 
+    $<$<COMPILE_LANGUAGE:CXX>:-g3 -Wall -Wextra -Werror -Wconversion -Wdouble-promotion -Wno-unused-parameter -Wno-snig-conversion -fsanitize=address >
+    )
+    target_compile_options(rest_api PRIVATE 
+    $<$<COMPILE_LANGUAGE:CXX>:-g3 -Wall -Wextra -Werror -Wconversion -Wdouble-promotion -Wno-unused-parameter -Wno-snig-conversion -fsanitize=address >
+    )
+    target_link_options(rest_api PRIVATE -fsanitize=address)
+endif()
+
 target_link_libraries(rest_api
     PRIVATE
     rest_apiObj
