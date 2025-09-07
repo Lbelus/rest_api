@@ -15,6 +15,11 @@ namespace mysql_utils
     {
         crow::SimpleApp app;
         mysqlpp::Connection conn(conn_id->db, conn_id->server, conn_id->user, conn_id->password);
+        if (!mysqlpp::Connection::thread_aware())
+        {
+            std::cerr << "MySQL++/libmysqlclient not built thread-aware on this system\n";
+            return 1;
+        }
         size_t index = 0;
         while(func_ptr_arr[index] != NULL)
         {

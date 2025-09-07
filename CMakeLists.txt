@@ -44,10 +44,10 @@ add_executable(rest_api src/main.cpp)
 
 if (ENABLE_BASIC_FLAGS)
     target_compile_options(rest_apiObj PRIVATE 
-    $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Werror -fsanitize=address >
+    $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Werror -enable-thread-check -fsanitize=address >
     )
     target_compile_options(rest_api PRIVATE 
-    $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Werror -fsanitize=address >
+    $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Werror -enable-thread-check -fsanitize=address >
     )
     target_link_options(rest_api PRIVATE -fsanitize=address)
 endif()
