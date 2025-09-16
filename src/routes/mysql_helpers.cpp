@@ -1,4 +1,4 @@
-#include <mysql_utils.hpp>
+#include <mysql_helpers.hpp>
 
 //MySQL++ is a C++ wrapper around the MySQL C API (libmysqlclient).
 
@@ -9,9 +9,10 @@
 // Even if you hash or encrypt your credentials in your code, they must be decrypted to plaintext before passing to mysqlpp::Connection.
 
 
-namespace mysql_utils
+namespace mysql_helpers
 {
-    int basic_api_exec(const mysql_connection_t* conn_id, mysql_func_ptr_t func_ptr_arr[], int port)
+
+    int simple_api_exec(const mysql_connection_t* conn_id, mysql_func_ptr_t func_ptr_arr[], int port)
     {
         crow::SimpleApp app;
         mysqlpp::Connection conn(conn_id->db, conn_id->server, conn_id->user, conn_id->password);
@@ -143,6 +144,25 @@ namespace mysql_utils
             default:
                 result += "NULL";
                 break;
+        }
+        return result;
+    }
+    
+    std::string create_update_fields_string(const crow::json::rvalue& data)
+    {
+        std::string result;
+        auto it = data.begin();
+        auto end = data.end();
+        while (it != end)
+        {
+            const auto& val = *it;
+            result += "`" + std::string(it->key()) + "`=";
+            result += crow_json_converter(val);
+            ++it;
+            if (it != end)
+            {
+                result += ", ";
+            }
         }
         return result;
     }

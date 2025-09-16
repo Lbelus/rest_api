@@ -1,30 +1,31 @@
 #include <rest_api.hpp>
 #include <unordered_map>
-#include <mysql_utils.hpp>
+#include <mysql_helpers.hpp>
 #include <db_repository.hpp>
-using namespace mysql_utils;
 
-std::string create_update_fields_string(const crow::json::rvalue& data)
-{
-    std::string result;
-    auto it = data.begin();
-    auto end = data.end();
-    while (it != end)
-    {
-        const auto& val = *it;
-        result += "`" + std::string(it->key()) + "`=";
-        result += crow_json_converter(val);
-        ++it;
-        if (it != end)
-        {
-            result += ", ";
-        }
-    }
-    return result;
-}
+using namespace mysql_helpers;
+
+// std::string create_update_fields_string(const crow::json::rvalue& data)
+// {
+//     std::string result;
+//     auto it = data.begin();
+//     auto end = data.end();
+//     while (it != end)
+//     {
+//         const auto& val = *it;
+//         result += "`" + std::string(it->key()) + "`=";
+//         result += crow_json_converter(val);
+//         ++it;
+//         if (it != end)
+//         {
+//             result += ", ";
+//         }
+//     }
+//     return result;
+// }
 
 // INSERT 
-void crow_insert_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
+void simple_crow_insert_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/insert/<string>").methods(crow::HTTPMethod::POST)
     ([&mysql](const crow::request& req, const std::string& table_name)
@@ -47,7 +48,7 @@ void crow_insert_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 }
 
 // UPDATE
-void crow_update_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
+void simple_crow_update_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/update/<string>/<int>").methods(crow::HTTPMethod::PUT)
     ([&mysql](const crow::request& req, const std::string& table_name, int id)
@@ -69,7 +70,7 @@ void crow_update_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 }
 
 // DELETE
-void crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
+void simple_crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/delete/<string>/<int>").methods(crow::HTTPMethod::DELETE)
     ([&mysql](const std::string& table_name, int id)
