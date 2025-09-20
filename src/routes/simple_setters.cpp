@@ -70,7 +70,7 @@ void simple_crow_update_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& 
 }
 
 // DELETE
-void simple_crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
+void  simple_crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/delete/<string>/<int>").methods(crow::HTTPMethod::DELETE)
     ([&mysql](const std::string& table_name, int id)
@@ -90,7 +90,7 @@ void simple_crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& 
 
 //redis 
 
-void crow_set(crow::SimpleApp& app, sw::redis::Redis& redis)
+void  simple_crow_set(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/set").methods(crow::HTTPMethod::POST)
     ([&redis](const crow::request& req)
@@ -110,7 +110,7 @@ void crow_set(crow::SimpleApp& app, sw::redis::Redis& redis)
     });
 }
 
-void crow_lpush(crow::SimpleApp& app, sw::redis::Redis& redis)
+void  simple_crow_lpush(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/lpush").methods(crow::HTTPMethod::POST)
     ([&redis](const crow::request& req)
@@ -130,7 +130,7 @@ void crow_lpush(crow::SimpleApp& app, sw::redis::Redis& redis)
     });
 }
 
-void crow_rpush(crow::SimpleApp& app, sw::redis::Redis& redis)
+void  simple_crow_rpush(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/rpush").methods(crow::HTTPMethod::POST)
     ([&redis](const crow::request& req)
@@ -150,7 +150,7 @@ void crow_rpush(crow::SimpleApp& app, sw::redis::Redis& redis)
     });
 }
 
-void crow_hmset(crow::SimpleApp& app, sw::redis::Redis& redis)
+void  simple_crow_hmset(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/hmset").methods(crow::HTTPMethod::POST)
     ([&redis](const crow::request& req)

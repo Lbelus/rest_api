@@ -9,11 +9,24 @@
 #include <iostream>
 #include <vector>
 #include <string>
-
 #include <mysql_conn_pool.hpp>
 
-typedef void (*mysql_func_ptr_t) (crow::SimpleApp&, mysqlpp::Connection&);
+// helper
 
+// crow::json::wvalue to_crow_json(const std::vector<mysqlpp::Row>& rows, const std::vector<std::string>& names);
+
+
+// exec
+typedef void (*mysql_simple_func_ptr_t) (crow::SimpleApp&, mysqlpp::Connection&);
+typedef void (*mysql_thread_safe_func_ptr_t) (crow::SimpleApp&, SimpleConnectionPool&);
+
+const mysql_connection_t* allocate_mysql_credentials(const char* db, const char* server=0, const char* user=0, const char* password=0, unsigned int port=0);
+int simple_api_exec(const mysql_connection_t* conn_id, mysql_simple_func_ptr_t func_ptr_arr[], int port);
+int thread_safe_api_exec(const mysql_connection_t* conn_id, mysql_thread_safe_func_ptr_t func_ptr_arr[], int port);
+int free_mysql_credentials(mysql_connection_t* connection_param);
+
+// mysql routes:
+//
 void simple_crow_get_all_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql);
 void simple_crow_get_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql);
 void simple_crow_insert_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql);
@@ -21,6 +34,14 @@ void simple_crow_update_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& 
 void simple_crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql);
 void simple_crow_get_joined_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql);
 void simple_crow_get_ordered_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql);
+
+void thread_safe_crow_get_all_entity(crow::SimpleApp& app, SimpleConnectionPool& pool_ptr);
+void thread_safe_crow_get_entity_by_id(crow::SimpleApp& app, SimpleConnectionPool& pool_ptr);
+void thread_safe_crow_insert_entity(crow::SimpleApp& app, SimpleConnectionPool& pool_ptr);
+void thread_safe_crow_update_entity_by_id(crow::SimpleApp& app, SimpleConnectionPool& pool_ptr);
+void thread_safe_crow_delete_entity_by_id(crow::SimpleApp& app, SimpleConnectionPool& pool_ptr);
+void thread_safe_crow_get_joined_entities(crow::SimpleApp& app, SimpleConnectionPool& pool_ptr);
+void thread_safe_crow_get_ordered_entities(crow::SimpleApp& app, SimpleConnectionPool& pool_ptr);
 
 // redis routes:
 
@@ -42,5 +63,34 @@ void simple_crow_echo(crow::SimpleApp& app, sw::redis::Redis& redis);
 void simple_crow_flushall(crow::SimpleApp& app, sw::redis::Redis& redis);
 void simple_crow_info(crow::SimpleApp& app, sw::redis::Redis& redis);
 
+
+
+// void thread_safe_crow_get_all_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql);
+// void thread_safe_crow_get_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql);
+// void thread_safe_crow_insert_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql);
+// void thread_safe_crow_update_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql);
+// void thread_safe_crow_delete_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql);
+// void thread_safe_crow_get_joined_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql);
+// void thread_safe_crow_get_ordered_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql);
+
+// redis routes:
+
+//post
+void thread_safe_crow_set(crow::SimpleApp& app, sw::redis::Redis& redis);
+void thread_safe_crow_lpush(crow::SimpleApp& app, sw::redis::Redis& redis);
+void thread_safe_crow_rpush(crow::SimpleApp& app, sw::redis::Redis& redis);
+void thread_safe_crow_hmget(crow::SimpleApp& app, sw::redis::Redis& redis);
+
+// get
+void thread_safe_crow_key(crow::SimpleApp& app, sw::redis::Redis& redis);
+void thread_safe_crow_get(crow::SimpleApp& app, sw::redis::Redis& redis);
+void thread_safe_crow_lpop(crow::SimpleApp& app, sw::redis::Redis& redis);
+void thread_safe_crow_rpop(crow::SimpleApp& app, sw::redis::Redis& redis);
+void thread_safe_crow_llen(crow::SimpleApp& app, sw::redis::Redis& redis);
+void thread_safe_crow_hmset(crow::SimpleApp& app, sw::redis::Redis& redis);
+void thread_safe_crow_ping(crow::SimpleApp& app, sw::redis::Redis& redis);
+void thread_safe_crow_echo(crow::SimpleApp& app, sw::redis::Redis& redis);
+void thread_safe_crow_flushall(crow::SimpleApp& app, sw::redis::Redis& redis);
+void thread_safe_crow_info(crow::SimpleApp& app, sw::redis::Redis& redis);
 
 #endif

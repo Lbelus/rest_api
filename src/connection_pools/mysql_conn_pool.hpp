@@ -9,6 +9,19 @@
 #include <vector>
 #include <mysql_helpers.hpp>
 
+#ifndef CONNECTION_STRUCT
+#define CONNECTION_STRUCT
+struct mysql_connection_s
+{
+    const char* db;
+    const char* server;
+    const char* user;   
+    const char* password;
+    unsigned int port;
+};
+typedef struct mysql_connection_s mysql_connection_t;
+#endif
+
 unsigned int GetThreadCount(unsigned int divBy);
 
 // ConnectionPool has three methods that you need to override in a subclass to make it concrete: 
