@@ -98,6 +98,7 @@ a basic cpp rest api
 
 ### MySql++ - connection and multi-threading:
 - https://tangentsoft.com/mysqlpp/doc/html/userman/threads.html
+- https://github.com/rpetrich/mysqlpp/blob/master/examples/cpool.cpp
 
 ### https/server crow documentation.
 

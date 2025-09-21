@@ -10,21 +10,32 @@
 class mysql_repository 
 {
     private:
-        mysqlpp::Connection         conn;
+        // mysqlpp::Connection         conn;
+        std::reference_wrapper<mysqlpp::Connection> conn_;
         mysqlpp::SimpleResult       simple_result;
         const char*                 error_msg; 
         std::vector<mysqlpp::Row>   rows;
         std::vector<std::string>    names;
-        
+        mysqlpp::Connection& conn()
+        {
+            return conn_.get();
+        }
         void store_names(const mysqlpp::StoreQueryResult& query_result);
     public:
     // Immediate syntax validation of input data at initilialization level. 
     // flag things that are definitely wrong; e.g. missing required fields, type mismatch, unparsable strings, any attempts of code injection and the presence (or lack of) of security tokens.
-        mysql_repository(mysqlpp::Connection conn): conn(conn)
-        {
-            
-            std::cout << "PLACEHOLDER SQL: " << "Server-side validation phase 1" << std::endl;
-        }
+    
+    // CTOR overload, allow us to use both a simple conn and scoped one (RAII). both are returning the same type so no further handling is required in the class.  
+    explicit mysql_repository(mysqlpp::Connection& conn)
+        : conn_(conn) {
+        std::cout << "PLACEHOLDER SQL: Server-side validation phase 1\n";
+    }
+
+    // Construct from a ScopedConnection (RAII wrapper around Connection)
+    explicit mysql_repository(mysqlpp::ScopedConnection& scoped)
+        : conn_(*scoped) { // deref to underlying mysqlpp::Connection
+        std::cout << "PLACEHOLDER SQL: Server-side validation phase 1\n";
+    }
 
     // Business-logic validation at method level
     // When this validation passes, the input data is at least syntactically correct and may be passed on to the services, where a more strict validation occurs; i.e. does the input data make sense business-wise, does the resource with that ID exist - and so on.

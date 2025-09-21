@@ -5,48 +5,48 @@
 
 // FROM SELECT WHERE
 // we are at the MVP stage security and validation is not an immediate concern. 
-auto test_print(const std::vector<mysqlpp::Row>& result)
-{
-    std::ostringstream out;
-    for (const auto& row : result)
-    {
-        out << "row: ";
+// auto test_print(const std::vector<mysqlpp::Row>& result)
+// {
+//     std::ostringstream out;
+//     for (const auto& row : result)
+//     {
+//         out << "row: ";
 
-        for (size_t i = 0; i < row.size(); ++i)
-        {
-            
-            out << row[(int)i] << (i + 1 < row.size() ? ", " : "");
-        }
-        out << "\n";
-    }
-    return out;
-}
+//         for (size_t i = 0; i < row.size(); ++i)
+//         {
+//             
+//             out << row[(int)i] << (i + 1 < row.size() ? ", " : "");
+//         }
+//         out << "\n";
+//     }
+//     return out;
+// }
 
-crow::json::wvalue to_crow_json(const std::vector<mysqlpp::Row>& rows,
-                                const std::vector<std::string>& names)
-{
-    crow::json::wvalue::list arr;
-    for (const auto& row : rows)
-    {
-        crow::json::wvalue obj;
-        for (size_t index = 0; index < names.size(); ++index)
-        {
-            int pos = (int)index;
-            if (row == NULL)
-            {
-                obj[names[pos]] = nullptr;
-            }
-            else
-            {
-                obj[names[pos]] = std::string(row[pos].c_str());
-            }
-        }
-        arr.push_back(std::move(obj));
-    }
-    return crow::json::wvalue(std::move(arr));
-}
+// crow::json::wvalue to_crow_json(const std::vector<mysqlpp::Row>& rows,
+//                                 const std::vector<std::string>& names)
+// {
+//     crow::json::wvalue::list arr;
+//     for (const auto& row : rows)
+//     {
+//         crow::json::wvalue obj;
+//         for (size_t index = 0; index < names.size(); ++index)
+//         {
+//             int pos = (int)index;
+//             if (row == NULL)
+//             {
+//                 obj[names[pos]] = nullptr;
+//             }
+//             else
+//             {
+//                 obj[names[pos]] = std::string(row[pos].c_str());
+//             }
+//         }
+//         arr.push_back(std::move(obj));
+//     }
+//     return crow::json::wvalue(std::move(arr));
+// }
 
-void crow_get_all_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
+void simple_crow_get_all_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/read/<string>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& key)
@@ -57,7 +57,7 @@ void crow_get_all_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
         { 
             const std::vector<mysqlpp::Row>& rows = repo.get_rows();
             const std::vector<std::string>& names = repo.get_names();
-            crow::json::wvalue res = to_crow_json(rows, names);
+            crow::json::wvalue res = mysql_helpers::to_crow_json(rows, names);
             return crow::response(200, res);
         }
         else
@@ -88,7 +88,7 @@ void crow_get_all_entity(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 //     });
 // }
 
-void crow_get_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
+void simple_crow_get_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/read/<string>/<int>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& key, int id)
@@ -99,7 +99,7 @@ void crow_get_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
         { 
             const std::vector<mysqlpp::Row>& rows = repo.get_rows();
             const std::vector<std::string>& names = repo.get_names();
-            crow::json::wvalue res = to_crow_json(rows, names);
+            crow::json::wvalue res = mysql_helpers::to_crow_json(rows, names);
             return crow::response(200, res);
         }
         else
@@ -110,7 +110,7 @@ void crow_get_entity_by_id(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 }
 
 // JOIN
-void crow_get_joined_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
+void simple_crow_get_joined_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/join/<string>/<string>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& table_name_A, const std::string& table_name_B)
@@ -121,7 +121,7 @@ void crow_get_joined_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
         { 
             const std::vector<mysqlpp::Row>& rows = repo.get_rows();
             const std::vector<std::string>& names = repo.get_names();
-            crow::json::wvalue res = to_crow_json(rows, names);
+            crow::json::wvalue res = mysql_helpers::to_crow_json(rows, names);
             return crow::response(200, res);
         }
         else
@@ -132,7 +132,7 @@ void crow_get_joined_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 }
 
 // ORDER
-void crow_get_ordered_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
+void simple_crow_get_ordered_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 {
     CROW_ROUTE(app, "/order/<string>/<string>/<string>").methods(crow::HTTPMethod::GET)
     ([&mysql](const std::string& table_name, const std::string& column, const std::string& order)
@@ -143,7 +143,7 @@ void crow_get_ordered_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
         { 
             const std::vector<mysqlpp::Row>& rows = repo.get_rows();
             const std::vector<std::string>& names = repo.get_names();
-            crow::json::wvalue res = to_crow_json(rows, names);
+            crow::json::wvalue res = mysql_helpers::to_crow_json(rows, names);
             return crow::response(200, res);
         }
         else
@@ -157,7 +157,7 @@ void crow_get_ordered_entities(crow::SimpleApp& app, mysqlpp::Connection& mysql)
 // REDIS
 
 
-void crow_key(crow::SimpleApp& app, sw::redis::Redis& redis)
+void simple_crow_key(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/key/<string>").methods(crow::HTTPMethod::GET)
     ([&redis](const std::string& key)
@@ -174,7 +174,7 @@ void crow_key(crow::SimpleApp& app, sw::redis::Redis& redis)
     });
 }
 
-void crow_get(crow::SimpleApp& app, sw::redis::Redis& redis)
+void simple_crow_get(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/get/<string>").methods(crow::HTTPMethod::GET)
     ([&redis](const std::string& key)
@@ -192,7 +192,7 @@ void crow_get(crow::SimpleApp& app, sw::redis::Redis& redis)
 }
 
 
-void crow_hmget(crow::SimpleApp& app, sw::redis::Redis& redis)
+void simple_crow_hmget(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/hmget").methods(crow::HTTPMethod::POST)
     ([&redis](const crow::request& req)
@@ -230,7 +230,7 @@ void crow_hmget(crow::SimpleApp& app, sw::redis::Redis& redis)
 }
 
 
-void crow_lpop(crow::SimpleApp& app, sw::redis::Redis& redis)
+void simple_crow_lpop(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/lpop/<string>").methods(crow::HTTPMethod::GET)
     ([&redis](const std::string& key)
@@ -247,7 +247,7 @@ void crow_lpop(crow::SimpleApp& app, sw::redis::Redis& redis)
     });
 }
 
-void crow_rpop(crow::SimpleApp& app, sw::redis::Redis& redis)
+void simple_crow_rpop(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/rpop/<string>").methods(crow::HTTPMethod::GET)
     ([&redis](const std::string& key)
@@ -264,7 +264,7 @@ void crow_rpop(crow::SimpleApp& app, sw::redis::Redis& redis)
     });
 }
 
-void crow_llen(crow::SimpleApp& app, sw::redis::Redis& redis)
+void simple_crow_llen(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/llen/<string>").methods(crow::HTTPMethod::GET)
     ([&redis](const std::string& key)
@@ -283,7 +283,7 @@ void crow_llen(crow::SimpleApp& app, sw::redis::Redis& redis)
 }
 
 
-void crow_ping(crow::SimpleApp& app, sw::redis::Redis& redis)
+void simple_crow_ping(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/ping").methods(crow::HTTPMethod::GET)
     ([&redis]()
@@ -300,7 +300,7 @@ void crow_ping(crow::SimpleApp& app, sw::redis::Redis& redis)
     });
 }
 
-void crow_echo(crow::SimpleApp& app, sw::redis::Redis& redis)
+void simple_crow_echo(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/echo/<string>").methods(crow::HTTPMethod::GET)
     ([&redis](const std::string& msg)
@@ -317,7 +317,7 @@ void crow_echo(crow::SimpleApp& app, sw::redis::Redis& redis)
     });
 }
 
-void crow_flushall(crow::SimpleApp& app, sw::redis::Redis& redis)
+void simple_crow_flushall(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/flushall").methods(crow::HTTPMethod::GET)
     ([&redis]()
@@ -327,7 +327,7 @@ void crow_flushall(crow::SimpleApp& app, sw::redis::Redis& redis)
     });
 }
 
-void crow_info(crow::SimpleApp& app, sw::redis::Redis& redis)
+void simple_crow_info(crow::SimpleApp& app, sw::redis::Redis& redis)
 {
     CROW_ROUTE(app, "/info").methods(crow::HTTPMethod::GET)
     ([&redis]()
