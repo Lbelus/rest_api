@@ -11,8 +11,8 @@ class mysql_repository
 {
     private:
         // mysqlpp::Connection         conn;
-        std::reference_wrapper<mysqlpp::Connection> conn_;
         mysqlpp::SimpleResult       simple_result;
+        std::reference_wrapper<mysqlpp::Connection> conn_;
         const char*                 error_msg; 
         std::vector<mysqlpp::Row>   rows;
         std::vector<std::string>    names;

@@ -132,7 +132,7 @@
     }
 
     //D
-bool mysql_repository::delete__(const std::string& table_name, int id)
+    bool mysql_repository::delete__(const std::string& table_name, int id)
     {
         mysqlpp::Query query = conn().query();
         query << "DELETE FROM `" << table_name << "` WHERE `id` =" << id;
