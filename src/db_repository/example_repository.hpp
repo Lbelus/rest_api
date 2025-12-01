@@ -1,15 +1,15 @@
-#ifndef EXAMPLE_REPOSITORY
-#define EXAMPLE_REPOSITORY
+#ifndef DB_EXAMPLE_REPOSITORY_HPP
+#define DB_EXAMPLE_REPOSITORY_HPP
 
-#ifndef REPO_FAKE_ONLY
+#if !REPO_FAKE_ONLY
 #include <crow.h>
 #endif
 #include <mysql++/mysql++.h>
 #include <mysql++/ssqls.h>
-#include <optional>
+// #include <optional>
 #include <vector>
-#include <memory>
-#include <mutex>
+// #include <memory>
+// #include <mutex>
 #include <string>
 #include <mysql_conn_pool.hpp>
 
@@ -90,7 +90,7 @@ struct IExampleUsersRepository
 *
 */
 
-#ifdef REPO_FAKE_ONLY
+#if !REPO_FAKE_ONLY
 class MySqlExampleUsersRepository : public IExampleUsersRepository
 {
 public:
@@ -120,6 +120,16 @@ public:
         : conn_(*scoped)
     { // deref to underlying mysqlpp::Connection
         std::cout << "PLACEHOLDER SQL: Server-side validation phase 1\n";
+    }
+
+    static ExampleUser make_user(std::string name, std::string email, int id=0)
+    {
+        ExampleUser ex_user;
+        ex_user.id = id;
+        ex_user.name = name;
+        ex_user.email = email;
+        ex_user.created_at = mysqlpp::DateTime(); // fine for tests
+        return ex_user;
     }
 
     int get_by_id(int id) override
@@ -321,7 +331,7 @@ public:
 * STEP 4: Use the virtual interface to create a test class
 *
 */
-#ifdef REPO_ENABLE_FAKE
+#if REPO_ENABLE_FAKE
 
 class FakeExampleUsersRepository : public IExampleUsersRepository
 {
@@ -454,9 +464,14 @@ public:
 * STEP 5: Create some route (crow app + pool_ptr)
 *
 */
+#if REPO_ENABLE_FAKE
+using ExampleUsersRepositoryImpl = FakeExampleUsersRepository;
+#else
+using ExampleUsersRepositoryImpl = MySqlExampleUsersRepository;
+#endif
 
 
-#ifndef REPO_FAKE_ONLY
+#if !REPO_FAKE_ONLY
 int mysqlExampleUsers_routes(crow::SimpleApp& app, SimpleConnectionPool& pool_ptr)
 {
     // GET /users/:id
@@ -464,7 +479,8 @@ int mysqlExampleUsers_routes(crow::SimpleApp& app, SimpleConnectionPool& pool_pt
     ([&pool_ptr](int id)
     { 
         mysqlpp::ScopedConnection sc(pool_ptr, true);
-        IExampleUsersRepository repo(sc);
+        ExampleUsersRepositoryImpl repo(sc);
+        
         int result = repo.get_by_id(id);
         if (result == EXIT_SUCCESS)
         {
@@ -483,7 +499,7 @@ int mysqlExampleUsers_routes(crow::SimpleApp& app, SimpleConnectionPool& pool_pt
     CROW_ROUTE(app, "/users")([&pool_ptr](const crow::request& req)
     {
         mysqlpp::ScopedConnection sc(pool_ptr, true);
-        IExampleUsersRepository repo(sc);
+        ExampleUsersRepositoryImpl repo(sc);
         std::size_t limit  = req.url_params.get("limit")  ? std::stoul(req.url_params.get("limit"))  : 100;
         std::size_t offset = req.url_params.get("offset") ? std::stoul(req.url_params.get("offset")) : 0;
         int result = repo.list_all(limit, offset);
@@ -503,7 +519,7 @@ int mysqlExampleUsers_routes(crow::SimpleApp& app, SimpleConnectionPool& pool_pt
     CROW_ROUTE(app, "/users").methods(crow::HTTPMethod::POST)([&pool_ptr](const crow::request& req)
     { 
         mysqlpp::ScopedConnection sc(pool_ptr, true);
-        IExampleUsersRepository repo(sc);
+        ExampleUsersRepositoryImpl repo(sc);
         crow::json::rvalue data = crow::json::load(req.body);
         if (!data)
         {
@@ -511,7 +527,7 @@ int mysqlExampleUsers_routes(crow::SimpleApp& app, SimpleConnectionPool& pool_pt
         }
         std::string name = static_cast<std::string>(data["name"]);
         std::string email = static_cast<std::string>(data["email"]);
-        ExampleUser new_ex_user = make_new_example_user(name, email);
+        ExampleUser new_ex_user = repo.make_user(name, email);
         
         bool result = repo.create(new_ex_user);
         if (result == EXIT_FAILURE)
@@ -525,7 +541,7 @@ int mysqlExampleUsers_routes(crow::SimpleApp& app, SimpleConnectionPool& pool_pt
     CROW_ROUTE(app, "/users/<int>").methods(crow::HTTPMethod::PUT)([&pool_ptr](const crow::request& req, int id)
     { 
         mysqlpp::ScopedConnection sc(pool_ptr, true);
-        IExampleUsersRepository repo(sc);
+        ExampleUsersRepositoryImpl repo(sc);
         crow::json::rvalue data = crow::json::load(req.body);
         if (!data)
         {
@@ -556,7 +572,7 @@ int mysqlExampleUsers_routes(crow::SimpleApp& app, SimpleConnectionPool& pool_pt
     CROW_ROUTE(app, "/users/<int>").methods(crow::HTTPMethod::DELETE)([&pool_ptr](int id)
     {
         mysqlpp::ScopedConnection sc(pool_ptr, true);
-        IExampleUsersRepository repo(sc);
+        ExampleUsersRepositoryImpl repo(sc);
         int result = repo.remove(id);
         if (result == EXIT_SUCCESS)
         {

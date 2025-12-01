@@ -1,5 +1,4 @@
 #include <rest_api.hpp>
-#include <example_repository.hpp>
 
 int main()
 {
@@ -29,7 +28,7 @@ int main()
             NULL
     };
 
-    thread_safe_api_exec(creds, func_ptr_arr, 3004);
+    thread_safe_api(creds, func_ptr_arr, 3004);
     free_mysql_credentials((mysql_connection_t*)creds);
     return EXIT_SUCCESS;
 }

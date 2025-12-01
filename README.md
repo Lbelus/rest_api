@@ -9,9 +9,9 @@ a basic cpp rest api
 
 1.1 **MySQL Connection Pool**
 
-* 1.1.1 Design thread-safe connection pool class
-* 1.1.2 Implement connection acquisition and release logic
-* 1.1.3 Implement idle connection timeout and auto-reconnect
+* 1.1.1 Design thread-safe connection pool class -> ok
+* 1.1.2 Implement connection acquisition and release logic -> ok
+* 1.1.3 Implement idle connection timeout and auto-reconnect -> ok
 * 1.1.4 Test under concurrent request load
 
 1.2 **Redis Connection Pool**
@@ -52,7 +52,7 @@ a basic cpp rest api
 3.3 **Optional Security Hardening**
 
 * 3.3.1 Implement rate limiting
-* 3.3.2 Enable CORS and security headers
+* 3.3.2 Enable CORS and security headers 
 
 ---
 
@@ -66,8 +66,9 @@ a basic cpp rest api
 
 4.2 **Integration Tests**
 
-* 4.2.1 Test API endpoints with mocked MySQL/Redis
-* 4.2.2 Test multi-threaded performance and resource usage
+* 4.2.1 Test API endpoints with mocked MySQL -> ok
+* 4.2.2 Test API endpoints with mocked Redis
+* 4.2.3 Test multi-threaded performance and resource usage
 
 ---
 
