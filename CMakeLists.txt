@@ -41,6 +41,24 @@ target_link_libraries(rest_apiObj PRIVATE ${REDIS_PLUS_PLUS_LIB})
 
 add_executable(rest_api src/main.cpp)
 
+option(ENABLE_GTEST "Enable Google Test" OFF)
+
+if(ENABLE_GTEST)
+    enable_testing()
+    find_package(GTest REQUIRED)
+    add_executable(repo_tests tests/test_example_repo.cc)
+    target_compile_definitions(repo_tests PRIVATE REPO_ENABLE_FAKE=1 REPO_FAKE_ONLY=1)
+    target_link_libraries(
+        repo_tests 
+        PRIVATE 
+        GTest::gtest_main 
+        Threads::Threads
+        ${MYSQLPP_LIB}
+    )
+    include(GoogleTest)
+    gtest_discover_tests(repo_tests)
+endif()
+
 
 if (ENABLE_BASIC_FLAGS)
     target_compile_options(rest_apiObj PRIVATE 
@@ -50,6 +68,15 @@ if (ENABLE_BASIC_FLAGS)
     $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Werror -fsanitize=address >
     )
     target_link_options(rest_api PRIVATE -fsanitize=address)
+    target_compile_definitions(rest_api PRIVATE REPO_ENABLE_FAKE=0 REPO_FAKE_ONLY=0)
+    target_link_libraries(
+        rest_api
+        PRIVATE
+        rest_apiObj
+        ${MYSQLPP_LIB}
+        ${MYSQLCLIENT_LIB}
+        Threads::Threads
+    )
 endif()
 if (ENABLE_FULL_FLAGS)
     target_compile_options(rest_apiObj PRIVATE 
@@ -59,12 +86,14 @@ if (ENABLE_FULL_FLAGS)
     $<$<COMPILE_LANGUAGE:CXX>:-g3 -Wall -Wextra -Werror -Wconversion -Wdouble-promotion -Wno-unused-parameter -Wno-snig-conversion -fsanitize=address >
     )
     target_link_options(rest_api PRIVATE -fsanitize=address)
+    target_compile_definitions(rest_api PRIVATE REPO_ENABLE_FAKE=0 REPO_FAKE_ONLY=0)
+    target_link_libraries(
+        rest_api
+        PRIVATE
+        rest_apiObj
+        ${MYSQLPP_LIB}
+        ${MYSQLCLIENT_LIB}
+        Threads::Threads
+    )
 endif()
 
-target_link_libraries(rest_api
-    PRIVATE
-    rest_apiObj
-    ${MYSQLPP_LIB}
-    ${MYSQLCLIENT_LIB}
-    Threads::Threads
-)

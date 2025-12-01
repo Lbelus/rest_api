@@ -22,6 +22,7 @@ struct mysql_connection_s
 typedef struct mysql_connection_s mysql_connection_t;
 #endif
 
+
 unsigned int GetThreadCount(unsigned int divBy);
 
 // ConnectionPool has three methods that you need to override in a subclass to make it concrete: 
@@ -106,6 +107,9 @@ private:
     std::string password_;
     unsigned int port_ = 0;
 };
+
+typedef void (*mysql_simple_func_ptr_t) (crow::SimpleApp&, mysqlpp::Connection&);
+typedef void (*mysql_thread_safe_func_ptr_t) (crow::SimpleApp&, SimpleConnectionPool&);
 
 // usage:
         // poolptr = new SimpleConnectionPool(cmdline);

@@ -1,5 +1,7 @@
-#include <rest_api.hpp>
-
+#include <stdio.h>
+#include <string.h>
+#include <crow.h>
+#include <mysql_conn_pool.hpp>
 
 const char* allocate_string(const char* str)
 {
@@ -39,7 +41,7 @@ int free_mysql_credentials(mysql_connection_t* connection_param)
     return EXIT_SUCCESS;
 }
 
-int simple_api_exec(const mysql_connection_t* conn_id, mysql_simple_func_ptr_t func_ptr_arr[], int port)
+int simple_api(const mysql_connection_t* conn_id, mysql_simple_func_ptr_t func_ptr_arr[], int port)
 {
     crow::SimpleApp app;
     mysqlpp::Connection conn(conn_id->db, conn_id->server, conn_id->user, conn_id->password);
@@ -53,7 +55,7 @@ int simple_api_exec(const mysql_connection_t* conn_id, mysql_simple_func_ptr_t f
     return EXIT_SUCCESS;
 }
 
-int thread_safe_api_exec(const mysql_connection_t* conn_id, mysql_thread_safe_func_ptr_t func_ptr_arr[], int port)
+int thread_safe_api(const mysql_connection_t* conn_id, mysql_thread_safe_func_ptr_t func_ptr_arr[], int port)
 {
     crow::SimpleApp app;
     SimpleConnectionPool pool(conn_id);

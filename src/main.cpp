@@ -1,6 +1,5 @@
 #include <rest_api.hpp>
 
-
 int main()
 {
     const mysql_connection_t* creds = allocate_mysql_credentials("test_rest_DB", "mysqlserver", "dev_admin", "dev_admin");
@@ -29,7 +28,7 @@ int main()
             NULL
     };
 
-    thread_safe_api_exec(creds, func_ptr_arr, 3004);
+    thread_safe_api(creds, func_ptr_arr, 3004);
     free_mysql_credentials((mysql_connection_t*)creds);
     return EXIT_SUCCESS;
 }

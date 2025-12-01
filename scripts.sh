@@ -171,12 +171,18 @@ rest_api_test_order_entity()
     curl http://$ip_port/order/users/name/asc
 }
 
+rest_api_test_read()
+{
+    tarball=$1
+    tar -xf tarball
+}
+
 re()
 {
     clear
     cd build/
     rm -r *
-    cmake .. -DENABLE_BASIC_FLAGS=ON
+    cmake .. -DENABLE_BASIC_FLAGS=ON 
     make
     cd ..
     ./build/rest_api
@@ -191,4 +197,15 @@ re_full()
     make
     cd ..
     ./build/rest_api
+}
+
+go_tests()
+{
+    clear
+    cd build/
+    rm -r *
+    cmake .. -DENABLE_GTEST=ON
+    make repo_tests
+    ctest --test-dir . --output-on-failure
+    cd ..
 }
